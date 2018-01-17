@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="SoundGenerator" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/SoundGenerator" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="GLFW3" />
+					<Add library="opengl32" />
+					<Add library="gdi32" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/SoundGenerator" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-static-libgcc" />
+					<Add option="-static-libstdc++" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-static-libstdc++ -static-libgcc" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-DWIN32" />
+			<Add option="-DTD2PLAY" />
+			<Add directory="td2play/simulator/include" />
+			<Add directory="td2play/simulator/GLFW-3/include" />
+			<Add directory="SoundGenerator" />
+			<Add directory="C:/Program Files (x86)/OpenAL 1.1 SDK/include" />
+		</Compiler>
+		<Linker>
+			<Add option="-static-libstdc++ -static-libgcc" />
+			<Add library="GLFW3" />
+			<Add library="opengl32" />
+			<Add library="gdi32" />
+			<Add library="OpenAL32" />
+			<Add directory="td2play/simulator/bin/Debug" />
+			<Add directory="C:/Program Files (x86)/OpenAL 1.1 SDK/libs/Win32" />
+		</Linker>
+		<ExtraCommands>
+			<Add before="prebuild.bat" />
+			<Add before="td2play\external\sync.bat" />
+			<Mode after="always" />
+		</ExtraCommands>
+		<Unit filename="SoundGenerator/SoundGenerator.cpp" />
+		<Unit filename="SoundGenerator/asset_tilemap.cpp" />
+		<Unit filename="SoundGenerator/asset_tilemap.h" />
+		<Unit filename="SoundGenerator/font_asset.cpp" />
+		<Unit filename="SoundGenerator/font_asset.h" />
+		<Unit filename="SoundGenerator/game_asteroids.cpp" />
+		<Unit filename="SoundGenerator/game_asteroids.h" />
+		<Unit filename="SoundGenerator/game_balancing.h" />
+		<Unit filename="SoundGenerator/game_collectable.cpp" />
+		<Unit filename="SoundGenerator/game_collectable.h" />
+		<Unit filename="SoundGenerator/game_common.cpp" />
+		<Unit filename="SoundGenerator/game_common.h" />
+		<Unit filename="SoundGenerator/game_intro.cpp" />
+		<Unit filename="SoundGenerator/game_intro.h" />
+		<Unit filename="SoundGenerator/game_level_01.cpp" />
+		<Unit filename="SoundGenerator/game_level_01.h" />
+		<Unit filename="SoundGenerator/game_level_02.cpp" />
+		<Unit filename="SoundGenerator/game_level_02.h" />
+		<Unit filename="SoundGenerator/game_level_main.cpp" />
+		<Unit filename="SoundGenerator/game_level_main.h" />
+		<Unit filename="SoundGenerator/game_level_tutorial.cpp" />
+		<Unit filename="SoundGenerator/game_level_tutorial.h" />
+		<Unit filename="SoundGenerator/game_menu.cpp" />
+		<Unit filename="SoundGenerator/game_menu.h" />
+		<Unit filename="SoundGenerator/game_particles.cpp" />
+		<Unit filename="SoundGenerator/game_particles.h" />
+		<Unit filename="SoundGenerator/game_persistence.cpp" />
+		<Unit filename="SoundGenerator/game_persistence.h" />
+		<Unit filename="SoundGenerator/game_player_stats.cpp" />
+		<Unit filename="SoundGenerator/game_player_stats.h" />
+		<Unit filename="SoundGenerator/game_projectile.cpp" />
+		<Unit filename="SoundGenerator/game_projectile.h" />
+		<Unit filename="SoundGenerator/game_ships.cpp" />
+		<Unit filename="SoundGenerator/game_ships.h" />
+		<Unit filename="SoundGenerator/game_sound.cpp" />
+		<Unit filename="SoundGenerator/game_sound.h" />
+		<Unit filename="SoundGenerator/game_ui_hud.cpp" />
+		<Unit filename="SoundGenerator/game_ui_hud.h" />
+		<Unit filename="SoundGenerator/game_ui_info.cpp" />
+		<Unit filename="SoundGenerator/game_ui_info.h" />
+		<Unit filename="SoundGenerator/game_ui_intermission.cpp" />
+		<Unit filename="SoundGenerator/game_ui_intermission.h" />
+		<Unit filename="SoundGenerator/game_ui_radar.cpp" />
+		<Unit filename="SoundGenerator/game_ui_radar.h" />
+		<Unit filename="SoundGenerator/game_ui_shield.cpp" />
+		<Unit filename="SoundGenerator/game_ui_shield.h" />
+		<Unit filename="SoundGenerator/image_data.cpp" />
+		<Unit filename="SoundGenerator/image_data.h" />
+		<Unit filename="td2play/simulator/src/Main.cpp" />
+		<Unit filename="td2play/srclib/lib_FixedMath.cpp" />
+		<Unit filename="td2play/srclib/lib_FixedMath.h" />
+		<Unit filename="td2play/srclib/lib_RenderBuffer.cpp" />
+		<Unit filename="td2play/srclib/lib_RenderBuffer.h" />
+		<Unit filename="td2play/srclib/lib_StringBuffer.cpp" />
+		<Unit filename="td2play/srclib/lib_StringBuffer.h" />
+		<Unit filename="td2play/srclib/lib_font_virtualdj.h" />
+		<Unit filename="td2play/srclib/lib_geom.h" />
+		<Unit filename="td2play/srclib/lib_hxcmod.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="td2play/srclib/lib_image.h" />
+		<Unit filename="td2play/srclib/lib_input.cpp" />
+		<Unit filename="td2play/srclib/lib_input.h" />
+		<Unit filename="td2play/srclib/lib_math.cpp" />
+		<Unit filename="td2play/srclib/lib_math.h" />
+		<Unit filename="td2play/srclib/lib_sound.cpp" />
+		<Unit filename="td2play/srclib/lib_sound.h" />
+		<Unit filename="td2play/srclib/lib_spritefont.h" />
+		<Unit filename="td2play/srclib/lib_spritefont_structs.h" />
+		<Unit filename="td2play/srclib/lib_storage.cpp" />
+		<Unit filename="td2play/srclib/lib_storage.h" />
+		<Unit filename="td2play/srclib/lib_tilemap.cpp" />
+		<Unit filename="td2play/srclib/lib_tilemap.h" />
+		<Unit filename="td2play/srclib/test_FixedMath.h" />
+		<Unit filename="td2play/srclib/test_math.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
