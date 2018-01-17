@@ -46,18 +46,37 @@ namespace Game {
     int button(int8_t x, int8_t y, int8_t w, int8_t h, SpriteSheetRect rect, bool focused) {
         buffer.drawRect(x,y,w,h)->filledRect(!focused || Time::millis %256 > 128 ? RGB565(128,0,0):RGB565(220,0,0));
         drawCenteredSprite(x+w/2,y+h/2,rect);
-        return isReleased(0);
+        return focused && isReleased(0);
     }
     int button(int8_t x, int8_t y, int8_t w, int8_t h, const char* text, bool focused) {
         buffer.drawRect(x,y,w,h)->filledRect(!focused || Time::millis %256 > 128 ? RGB565(128,0,0):RGB565(220,0,0));
         buffer.drawText(text,x,y,w,h+1,0,0,false,FontAsset::font,0,RenderCommandBlendMode::opaque);
-        return isReleased(0);
+        return focused && isReleased(0);
     }
     void drawText(const char *text, int8_t x, int8_t y, int8_t w, int8_t h, int8_t halign, int8_t valign) {
         buffer.drawText(text,x,y,w,h,halign,valign,false,FontAsset::font,0,RenderCommandBlendMode::opaque);
     }
     void drawText(const char *text, int8_t x, int8_t y, int8_t w, int8_t h) {
         drawText(text,x,y,w,h,0,0);
+    }
+
+
+    bool loopEditSample;
+    void playEditSample(bool loop);
+    void stopEditSample();
+    void onPlaybackStop(Sound::SamplePlayback* playback) {
+        if (loopEditSample) {
+            playEditSample(true);
+        }
+    }
+    void playEditSample(bool loop) {
+        stopEditSample();
+        loopEditSample = loop;
+        Sound::playSample(1,editSamples, sampleCount,100,100,1000)->setOnStopCallback(onPlaybackStop, 0);
+    }
+    void stopEditSample() {
+        loopEditSample = false;
+        Sound::stopSample(1);
     }
 
     namespace UI {
@@ -97,11 +116,13 @@ namespace Game {
             }
         }
         void drawSamples(bool focused, int8_t dx, int8_t dy) {
+            buffer.drawRect(sampleCount,14,1,36)->filledRect(RGB565(35,64,128));
             drawText(stringBuffer.start()
                      .putDec(editSamples[cursorPos]).put(" @ ")
                      .putDec(cursorPos).put(':').putDec(cursorPos*1000/FREQUENCY).put("ms").get(),0,55,96,9);
             if (selectedElement == Element::WINDOW_SAMPLES_ACTIVE) {
                 if (isReleased(0) && !hasDragged) selectedElement = Element::WINDOW_SAMPLES;
+                if (isReleased(1) && !hasDragged) sampleCount = cursorPos;
                 buffer.drawRect(0,16,96,32)->filledRect(RGB565(0,0,64));
                 cursorPos += isHeld(0) ? dx * 8 : dx;
                 cursorPos %= sizeof(editSamples);
@@ -146,7 +167,9 @@ namespace Game {
             }
             drawSamples(selectedElement == Element::WINDOW_SAMPLES, x,y);
             button(0,0,24,9,"Menu", selectedElement == Element::BUTTON_MENU);
-            button(96-9,0,9,9,ImageAsset::TextureAtlas_atlas::play.sprites[0], selectedElement == Element::BUTTON_PLAY);
+            if (button(96-9,0,9,9,ImageAsset::TextureAtlas_atlas::play.sprites[0], selectedElement == Element::BUTTON_PLAY)) {
+                playEditSample(false);
+            }
             if (!wasHeld(0) && !wasHeld(1)) hasDragged = 0;
 
         }
@@ -164,6 +187,5 @@ namespace Game {
         buffer.setClearBackground(true,0);
         Sound::init();
         atlas = Texture<uint16_t>(ImageAsset::atlas);
-        Sound::playSample(1,editSamples, 2,100,100,1000);
     }
 }
