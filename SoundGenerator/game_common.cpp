@@ -17,6 +17,7 @@ namespace Game {
     Texture<uint16_t> atlas;
     Sound::SamplePlayback edit;
     int8_t editSamples[256];
+    int8_t editSamplesCopy[sizeof(editSamples)];
     uint16_t sampleCount = 2;
 
     RenderCommand<uint16_t>* drawCenteredSprite(int x,int y,SpriteSheetRect rect) {
@@ -42,16 +43,33 @@ namespace Game {
     bool isReleased(int id) {
         return !Joystick::getButton(id,Joystick::Phase::CURRENT) && Joystick::getButton(id,Joystick::Phase::PREVIOUS);
     }
-
-    int button(int8_t x, int8_t y, int8_t w, int8_t h, SpriteSheetRect rect, bool focused) {
+    static int isContinousPress(bool focused, bool continous) {
+        static uint32_t inputBlockTime;
+        if (!continous || !focused) return focused && isReleased(0);
+        if (isReleased(0) || !isHeld(0)) return 0;
+        if (isPressed(0)) {
+            inputBlockTime = Time::millis;
+            return 1;
+        }
+        if (Time::millis - inputBlockTime < 200) return 0;
+        inputBlockTime += 250;
+        return 1;
+    }
+    int button(int8_t x, int8_t y, int8_t w, int8_t h, SpriteSheetRect rect, bool focused, bool continous) {
         buffer.drawRect(x,y,w,h)->filledRect(!focused || Time::millis %256 > 128 ? RGB565(128,0,0):RGB565(220,0,0));
         drawCenteredSprite(x+w/2,y+h/2,rect);
-        return focused && isReleased(0);
+        return isContinousPress(focused, continous);
     }
-    int button(int8_t x, int8_t y, int8_t w, int8_t h, const char* text, bool focused) {
+    int button(int8_t x, int8_t y, int8_t w, int8_t h, SpriteSheetRect rect, bool focused) {
+        return button(x,y,w,h,rect,focused,false);
+    }
+    int button(int8_t x, int8_t y, int8_t w, int8_t h, const char* text, bool focused,  bool continous) {
         buffer.drawRect(x,y,w,h)->filledRect(!focused || Time::millis %256 > 128 ? RGB565(128,0,0):RGB565(220,0,0));
         buffer.drawText(text,x,y,w,h+1,0,0,false,FontAsset::font,0,RenderCommandBlendMode::opaque);
-        return focused && isReleased(0);
+        return isContinousPress(focused, continous);
+    }
+    int button(int8_t x, int8_t y, int8_t w, int8_t h, const char* text, bool focused) {
+        return button(x,y,w,h,text,focused, false);
     }
     void drawText(const char *text, int8_t x, int8_t y, int8_t w, int8_t h, int8_t halign, int8_t valign) {
         buffer.drawText(text,x,y,w,h,halign,valign,false,FontAsset::font,0,RenderCommandBlendMode::opaque);
@@ -86,12 +104,14 @@ namespace Game {
             const uint8_t WINDOW_SAMPLES = 3;
             const uint8_t WINDOW_SAMPLES_ACTIVE = 4;
 
+            const uint8_t MENU_CONTROLLER_ID_MIN = 20;
             const uint8_t MENU_BUTTON_AMP_MORE = 20;
             const uint8_t MENU_BUTTON_AMP_LESS = 21;
             const uint8_t MENU_BUTTON_OK = 22;
             const uint8_t MENU_BUTTON_CANCEL = 23;
             const uint8_t MENU_BUTTON_FRQ_MORE = 24;
             const uint8_t MENU_BUTTON_FRQ_LESS = 25;
+            const uint8_t MENU_CONTROLLER_ID_MAX = 25;
 
             const uint8_t CONTEXT_MENU_CLEAR = 10;
             const uint8_t CONTEXT_MENU_NOISE_ADD = 11;
@@ -126,13 +146,24 @@ namespace Game {
             Element::CONTEXT_MENU_CLEAR,
 
 
+            Element::MENU_BUTTON_AMP_LESS,
+            Element::MENU_BUTTON_AMP_MORE,
+            Element::MENU_BUTTON_FRQ_LESS,
+            Element::MENU_BUTTON_FRQ_MORE,
+            Element::MENU_BUTTON_CANCEL,
+            Element::MENU_BUTTON_OK,
+            Element::MENU_BUTTON_AMP_LESS,
         };
+        namespace ControllerMode{
+            const uint8_t ADD_RANDOM_NOISE = 1;
+        }
         #define FOCUS_SEQUENCE_COUNT (sizeof(FOCUS_SEQUENCE))
         int8_t selectedElement = Element::BUTTON_MENU;
         uint16_t cursorPos, cursorStartPos;
         uint32_t blockJoystick;
         uint8_t hasDragged;
-
+        uint8_t controllerAmp, controllerFrq;
+        uint8_t controllerMode, controllerSeed;
 
         void nextElement() {
             for (uint8_t i = 0; i < FOCUS_SEQUENCE_COUNT; i+=1) {
@@ -156,6 +187,65 @@ namespace Game {
                 }
             }
         }
+        void AddRandomNoise(uint16_t from, uint16_t to, uint8_t amp, uint8_t frq) {
+            int16_t prev = editSamples[from];
+            for(uint16_t i = from; i <= to; i+=1) {
+                int16_t s = editSamples[i];
+                s += (int16_t)((((int8_t)(Math::randInt() &0xff)*amp)>>8));
+                if (s < -126) s = -126;
+                if (s > 127) s = 127;
+                editSamples[i] = (int8_t)s;
+            }
+        }
+        void drawControllers(int8_t dx, int8_t dy) {
+            if (selectedElement < Element::MENU_CONTROLLER_ID_MIN || selectedElement > Element::MENU_CONTROLLER_ID_MAX) {
+                return;
+            }
+            buffer.drawRect(0,48,96,16)->filledRect(RGB565(90,90,128));
+            buffer.drawRect(7,48,32,7)->filledRect(RGB565(0,0,0));
+            buffer.drawText(stringBuffer.start().putDec(controllerAmp).get(),7,49,32,7,0,0,false,FontAsset::font,0);
+            buffer.drawRect(7+controllerAmp * 32 / 255,48,1,7)->filledRect(RGB565(128,180,255));
+            buffer.drawRect(56,48,33,7)->filledRect(RGB565(0,0,0));
+            buffer.drawRect(56+controllerFrq * 33 / 255,48,1,7)->filledRect(RGB565(128,180,255));
+            buffer.drawText(stringBuffer.start().putDec(controllerFrq).get(),56,49,32,7,0,0,false,FontAsset::font,0);
+            if (button(0,48,7,7,"-",selectedElement == Element::MENU_BUTTON_AMP_LESS,true)) {
+                controllerAmp -=1;
+            }
+            if (button(39,48,7,7,"+",selectedElement == Element::MENU_BUTTON_AMP_MORE,true)) {
+                controllerAmp +=1;
+            }
+            if  (button(49,48,7,7,"-",selectedElement == Element::MENU_BUTTON_FRQ_LESS, true)) {
+                controllerFrq -=1;
+            }
+            if (button(89,48,7,7,"+",selectedElement == Element::MENU_BUTTON_FRQ_MORE, true)) {
+                controllerFrq +=1;
+            }
+            if (button(66,55,30,9,"OK",selectedElement == Element::MENU_BUTTON_OK)) {
+                selectedElement = Element::WINDOW_SAMPLES_ACTIVE;
+            }
+            memcpy(editSamples, editSamplesCopy, sizeof(editSamples));
+            if (button(0,55,30,9,"Cancel",selectedElement == Element::MENU_BUTTON_CANCEL)) {
+                selectedElement = Element::WINDOW_SAMPLES_ACTIVE;
+            }
+
+            Math::setSeed(17, controllerSeed);
+            uint16_t a = cursorPos < cursorStartPos ? cursorPos : cursorStartPos;
+            uint16_t b = cursorPos >= cursorStartPos ? cursorPos : cursorStartPos;
+
+            switch (controllerMode) {
+            case ControllerMode::ADD_RANDOM_NOISE:
+                AddRandomNoise(a,b,controllerAmp, controllerFrq);
+                break;
+            }
+        }
+
+        void showControllers(uint8_t type) {
+            controllerSeed = (uint8_t)Time::millis;
+            memcpy(editSamplesCopy, editSamples, sizeof(editSamples));
+            controllerMode= type;
+            selectedElement = Element::MENU_BUTTON_AMP_LESS;
+            //printf("%d\n",selectedElement);
+        }
 
         void drawContextMenu(int8_t dx, int8_t dy) {
             if (selectedElement < Element::CONTEXT_MENU_CLEAR || selectedElement > Element::CONTEXT_MENU_CANCEL) return;
@@ -178,8 +268,9 @@ namespace Game {
             if (isReleased(0)) {
                 uint16_t a = cursorPos < cursorStartPos ? cursorPos : cursorStartPos;
                 uint16_t b = cursorPos >= cursorStartPos ? cursorPos : cursorStartPos;
-
-                switch (selectedElement) {
+                uint8_t sel = selectedElement;
+                selectedElement = Element::WINDOW_SAMPLES_ACTIVE;
+                switch (sel) {
                 case Element::CONTEXT_MENU_SET_END:
                     sampleCount = cursorStartPos;
                     break;
@@ -187,9 +278,9 @@ namespace Game {
                     for (int i=a;i<=b;i+=1) editSamples[i] = 0;
                     break;
                 case Element::CONTEXT_MENU_NOISE_ADD:
+                    showControllers(ControllerMode::ADD_RANDOM_NOISE);
                     break;
                 }
-                selectedElement = Element::WINDOW_SAMPLES_ACTIVE;
             }
 
 
@@ -273,6 +364,7 @@ namespace Game {
             }
 
             drawContextMenu(x,y);
+            drawControllers(x,y);
             if (!wasHeld(0) && !wasHeld(1)) hasDragged = 0;
 
         }
